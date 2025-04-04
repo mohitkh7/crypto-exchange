@@ -1,0 +1,444 @@
+openapi: 3.0.0
+info:
+  title: Crypto Exchange API
+  version: 1.0.0
+  description: API documentation for the cryptocurrency exchange platform
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            status:
+              type: integer
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        fiat_balance:
+          type: number
+          format: float
+        created_at:
+          type: string
+          format: date-time
+
+    CryptoAsset:
+      type: object
+      properties:
+        crypto_type:
+          type: string
+        amount:
+          type: number
+          format: float
+        deposit_address:
+          type: string
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [buy, sell, withdraw]
+        crypto_type:
+          type: string
+        amount:
+          type: number
+          format: float
+        price:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [pending, completed, failed]
+        created_at:
+          type: string
+          format: date-time
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                      user:
+                        $ref: '#/components/schemas/User'
+
+  /auth/login:
+    post:
+      summary: Login user
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                      user:
+                        $ref: '#/components/schemas/User'
+
+  /users/profile:
+    get:
+      summary: Get user profile
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+    put:
+      summary: Update user profile
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      user:
+                        $ref: '#/components/schemas/User'
+
+  /users/balance:
+    get:
+      summary: Get user's fiat balance
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User's fiat balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      balance:
+                        type: number
+                        format: float
+
+  /crypto/balance:
+    get:
+      summary: Get user's crypto balance
+      tags: [Crypto]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User's crypto balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      assets:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CryptoAsset'
+
+  /crypto/transactions:
+    get:
+      summary: Get user's transaction history
+      tags: [Crypto]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User's transaction history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      transactions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Transaction'
+
+  /crypto/buy:
+    post:
+      summary: Buy cryptocurrency
+      tags: [Crypto]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cryptoType
+                - amount
+              properties:
+                cryptoType:
+                  type: string
+                amount:
+                  type: number
+                  format: float
+                  minimum: 0.00000001
+      responses:
+        '200':
+          description: Purchase successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      amount:
+                        type: number
+                      price:
+                        type: number
+                      totalCost:
+                        type: number
+
+  /crypto/sell:
+    post:
+      summary: Sell cryptocurrency
+      tags: [Crypto]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cryptoType
+                - amount
+              properties:
+                cryptoType:
+                  type: string
+                amount:
+                  type: number
+                  format: float
+                  minimum: 0.00000001
+      responses:
+        '200':
+          description: Sale successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      amount:
+                        type: number
+                      price:
+                        type: number
+                      totalValue:
+                        type: number
+
+  /crypto/deposit-address/{cryptoType}:
+    get:
+      summary: Get deposit address for a specific cryptocurrency
+      tags: [Crypto]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: cryptoType
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deposit address generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      depositAddress:
+                        type: string
+
+  /crypto/withdraw:
+    post:
+      summary: Withdraw cryptocurrency
+      tags: [Crypto]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cryptoType
+                - amount
+                - address
+              properties:
+                cryptoType:
+                  type: string
+                amount:
+                  type: number
+                  format: float
+                  minimum: 0.00000001
+                address:
+                  type: string
+      responses:
+        '200':
+          description: Withdrawal initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      amount:
+                        type: number
+                      address:
+                        type: string 
