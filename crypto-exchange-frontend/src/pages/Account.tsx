@@ -43,7 +43,7 @@ const Account: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [dialogType, setDialogType] = useState<'buy' | 'sell' | 'deposit' | 'withdraw' | null>(null);
+  const [dialogType, setDialogType] = useState<'sell' | 'deposit' | 'withdraw' | null>(null);
   const [amount, setAmount] = useState('');
   const [processing, setProcessing] = useState(false);
 
@@ -89,6 +89,14 @@ const Account: React.FC = () => {
   };
 
   const handleActionClick = (type: 'buy' | 'sell' | 'deposit' | 'withdraw') => {
+    if (type === 'buy') {
+      navigate('/buy');
+      return;
+    }
+    if (type === 'sell') {
+      navigate('/sell');
+      return;
+    }
     setDialogType(type);
     setOpenDialog(true);
   };
@@ -244,7 +252,6 @@ const Account: React.FC = () => {
       {/* Action Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>
-          {dialogType === 'buy' && 'Buy Cryptocurrency'}
           {dialogType === 'sell' && 'Sell Cryptocurrency'}
           {dialogType === 'deposit' && 'Deposit Funds'}
           {dialogType === 'withdraw' && 'Withdraw Funds'}

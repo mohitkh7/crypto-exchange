@@ -9,4 +9,7 @@ export const API_URLS = {
     balance: `${API_HOST}/api/users/balance`,
     actions: (action: string) => `${API_HOST}/api/account/${action}`,
   },
+  crypto: {
+    price: `${API_HOST}/api/crypto/price`,
+  },
 };

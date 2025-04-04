@@ -31,18 +31,18 @@ const Footer: React.FC = () => {
               Quick Links
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              <Link href="/" color="inherit" underline="hover">
-                Home
+              <Link href="/buy" color="inherit" underline="hover">
+                Buy Crypto
               </Link>
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              <Link href="/login" color="inherit" underline="hover">
-                Login
+              <Link href="/sell" color="inherit" underline="hover">
+                Sell Crypto
               </Link>
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              <Link href="/signup" color="inherit" underline="hover">
-                Sign Up
+              <Link href="https://developers.bitgo.com/" color="inherit" underline="hover" target="_blank" rel="noopener">
+                BitGo Developer Portal
               </Link>
             </Typography>
           </Grid>
@@ -51,13 +51,13 @@ const Footer: React.FC = () => {
               Connect With Us
             </Typography>
             <Box>
-              <IconButton color="inherit">
+              <IconButton color="inherit" href="https://facebook.com" target="_blank" rel="noopener">
                 <Facebook />
               </IconButton>
-              <IconButton color="inherit">
+              <IconButton color="inherit" href="https://twitter.com" target="_blank" rel="noopener">
                 <Twitter />
               </IconButton>
-              <IconButton color="inherit">
+              <IconButton color="inherit" href="https://linkedin.com" target="_blank" rel="noopener">
                 <LinkedIn />
               </IconButton>
             </Box>
