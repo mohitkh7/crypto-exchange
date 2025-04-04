@@ -1,5 +1,9 @@
+const axios = require('axios');
 const { db } = require('../config/database');
 const { AppError } = require('../middleware/error.middleware');
+
+// List of supported cryptocurrencies
+const supportedCoins = ['eth', 'btc'];
 
 // Placeholder for BitGo SDK integration
 const getCurrentPrice = async (cryptoType) => {
@@ -279,11 +283,61 @@ const withdrawCrypto = async (req, res, next) => {
   }
 };
 
+const getCryptoPrice = async (req, res) => {
+  
+  try {
+    const { coin } = req.params;    
+    // Validate if the requested coin is supported
+    if (!coin || !supportedCoins.includes(coin.toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        message: `Unsupported cryptocurrency. Supported coins are: ${supportedCoins.join(', ')}`
+      });
+    }
+
+    // Fetch price data from BitGo API
+    const response = await axios.get(`https://app.bitgo.com/api/v2/market/latest?coin=${coin.toLowerCase()}`);
+    
+    // Extract the USD price from the response
+    const marketData = response.data.marketData[0];
+    const usdPrice = marketData.currencies.USD.last;
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        coin: coin.toLowerCase(),
+        price: usdPrice,
+        currency: 'USD',
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching crypto price:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch cryptocurrency price',
+      error: error.message
+    });
+  }
+};
+
+
+const getSupportedCoins = (req, res) => {
+  return res.status(200).json({
+    success: true,
+    data: {
+      supportedCoins
+    }
+  });
+};
+
 module.exports = {
   getBalance,
   getTransactionHistory,
   buyCrypto,
   sellCrypto,
   getDepositAddress,
-  withdrawCrypto
+  withdrawCrypto,
+  getCryptoPrice,
+  getSupportedCoins
 }; 

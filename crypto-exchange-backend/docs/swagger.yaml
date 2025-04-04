@@ -441,4 +441,89 @@ paths:
                       amount:
                         type: number
                       address:
-                        type: string 
+                        type: string
+
+  /crypto/price/{coin}:
+    get:
+      summary: Get the current price of a cryptocurrency in USD
+      tags: [Crypto]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: coin
+          required: true
+          schema:
+            type: string
+          description: The cryptocurrency symbol (e.g., 'eth', 'btc')
+      responses:
+        '200':
+          description: Successfully retrieved the cryptocurrency price
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      coin:
+                        type: string
+                        example: eth
+                      price:
+                        type: number
+                        example: 1814.46
+                      currency:
+                        type: string
+                        example: USD
+                      timestamp:
+                        type: string
+                        format: date-time
+                        example: 2025-04-04T21:51:36.418Z
+        '400':
+          description: Invalid request or unsupported cryptocurrency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error' 
+
+  /crypto/supported-coins:
+    get:
+      summary: Get the list of supported cryptocurrencies
+      tags: [Crypto]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved the list of supported cryptocurrencies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      supportedCoins:
+                        type: array
+                        items:
+                          type: string
+                        example: ["eth", "btc"]
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

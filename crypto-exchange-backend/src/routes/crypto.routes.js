@@ -8,7 +8,9 @@ const {
   getDepositAddress,
   withdrawCrypto,
   getBalance,
-  getTransactionHistory
+  getTransactionHistory,
+  getCryptoPrice,
+  getSupportedCoins
 } = require('../controllers/crypto.controller');
 
 const router = express.Router();
@@ -55,5 +57,8 @@ router.post('/withdraw',
   validateRequest,
   withdrawCrypto
 );
+
+router.get('/price/:coin', getCryptoPrice);
+router.get('/supported-coins', getSupportedCoins);
 
 module.exports = router; 
