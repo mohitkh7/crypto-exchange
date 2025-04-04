@@ -2,13 +2,35 @@ const axios = require('axios');
 const { db } = require('../config/database');
 const { AppError } = require('../middleware/error.middleware');
 
+const NodeCache = require('node-cache');
+
+// Create a cache instance
+const cache = new NodeCache({ stdTTL: process.env.CACHE_TTL_IN_SECONDS });
+
 // List of supported cryptocurrencies
 const supportedCoins = ['eth', 'btc'];
 
 // Placeholder for BitGo SDK integration
-const getCurrentPrice = async (cryptoType) => {
-  // TODO: Implement BitGo SDK price fetching
-  return 50000; // Placeholder price for BTC
+const getCurrentPrice = async (coin) => {
+  const key = coin.toLowerCase();
+
+  // Try getting from cache
+  const cachedPrice = cache.get(key);
+  if (cachedPrice !== undefined) {
+    return cachedPrice;
+  }
+
+  // Fetch price data from BitGo API
+  const response = await axios.get(`https://app.bitgo.com/api/v2/market/latest?coin=${coin.toLowerCase()}`);
+    
+  // Extract the USD price from the response
+  const marketData = response.data.marketData[0];
+  const usdPrice = marketData.currencies.USD.last;
+
+  // Store in cache
+  cache.set(key, usdPrice);
+
+  return usdPrice;
 };
 
 const getBalance = async (req, res, next) => {
@@ -295,12 +317,7 @@ const getCryptoPrice = async (req, res) => {
       });
     }
 
-    // Fetch price data from BitGo API
-    const response = await axios.get(`https://app.bitgo.com/api/v2/market/latest?coin=${coin.toLowerCase()}`);
-    
-    // Extract the USD price from the response
-    const marketData = response.data.marketData[0];
-    const usdPrice = marketData.currencies.USD.last;
+    const usdPrice = await getCurrentPrice(coin);
     
     return res.status(200).json({
       success: true,

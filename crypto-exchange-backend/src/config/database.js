@@ -34,6 +34,7 @@ const initializeDatabase = () => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)
+        UNIQUE(user_id, crypto_type)
       )`);
 
       // Transactions table

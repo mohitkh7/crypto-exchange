@@ -18,10 +18,10 @@ const SellCrypto: React.FC = () => {
   const navigate = useNavigate();
   const [selectedCoin, setSelectedCoin] = useState<string>('eth');
   const [price, setPrice] = useState<number | null>(null);
-  const [amountCoin, setAmountCoin] = useState<string>('');
+  const [amountUSD, setAmountUSD] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [equivalentUSD, setEquivalentUSD] = useState<number | null>(null);
+  const [equivalentAmount, setEquivalentAmount] = useState<number | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ const SellCrypto: React.FC = () => {
       }
 
       setPrice(data.data.price);
-      setEquivalentUSD(null);
+      setEquivalentAmount(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while fetching the price');
     } finally {
@@ -71,24 +71,24 @@ const SellCrypto: React.FC = () => {
   const handleCoinChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedCoin(event.target.value);
     setPrice(null);
-    setEquivalentUSD(null);
+    setEquivalentAmount(null);
   };
 
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
-    setAmountCoin(value);
+    setAmountUSD(value);
     if (price) {
-      const amountInCoin = parseFloat(value);
-      if (!isNaN(amountInCoin) && amountInCoin > 0) {
-        setEquivalentUSD(amountInCoin * price);
+      const amountInUSD = parseFloat(value);
+      if (!isNaN(amountInUSD) && amountInUSD > 0) {
+        setEquivalentAmount(amountInUSD / price);
       } else {
-        setEquivalentUSD(null);
+        setEquivalentAmount(null);
       }
     }
   };
 
   const handleSell = async () => {
-    if (!token || !price || !amountCoin || isNaN(Number(amountCoin)) || Number(amountCoin) <= 0) {
+    if (!token || !price || !amountUSD || isNaN(Number(amountUSD)) || Number(amountUSD) <= 0) {
       return;
     }
 
@@ -96,7 +96,7 @@ const SellCrypto: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch(API_URLS.account.actions('sell'), {
+      const response = await fetch(API_URLS.crypto.sell, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -104,7 +104,7 @@ const SellCrypto: React.FC = () => {
         },
         body: JSON.stringify({
           cryptoType: selectedCoin,
-          amount: Number(amountCoin),
+          amount: Number(amountUSD) / price, // Convert USD amount to crypto amount
         }),
       });
 
@@ -166,19 +166,19 @@ const SellCrypto: React.FC = () => {
 
                 <Grid item xs={12}>
                   <TextField
-                    label={`Amount in ${selectedCoin}`}
+                    label={`Amount in USD`}
                     type="number"
-                    value={amountCoin}
+                    value={amountUSD}
                     onChange={handleAmountChange}
                     fullWidth
                     sx={{ mb: 2 }}
                   />
                 </Grid>
 
-                {equivalentUSD !== null && (
+                {equivalentAmount !== null && (
                   <Grid item xs={12}>
                     <Typography variant="body2" color="text.secondary">
-                      Equivalent USD: ${equivalentUSD.toFixed(2)}
+                      Equivalent Amount: ${equivalentAmount.toFixed(6)} {selectedCoin.toUpperCase()}
                     </Typography>
                   </Grid>
                 )}
@@ -188,7 +188,7 @@ const SellCrypto: React.FC = () => {
                     variant="contained"
                     color="primary"
                     onClick={handleSell}
-                    disabled={loading || !amountCoin || isNaN(Number(amountCoin)) || Number(amountCoin) <= 0}
+                    disabled={loading || !amountUSD || isNaN(Number(amountUSD)) || Number(amountUSD) <= 0}
                     sx={{ mt: 2 }}
                   >
                     {loading ? <CircularProgress size={24} /> : 'Sell Now'}

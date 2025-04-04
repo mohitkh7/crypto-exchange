@@ -97,7 +97,7 @@ const BuyCrypto: React.FC = () => {
     setError(null);
     
     try {
-      const response = await fetch(API_URLS.account.actions('buy'), {
+      const response = await fetch(API_URLS.crypto.buy, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
