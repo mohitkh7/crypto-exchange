@@ -33,7 +33,7 @@ app.use('/api/crypto', cryptoRoutes);
 app.use(errorHandler);
 
 // Initialize database and start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4000;
 
 initializeDatabase()
   .then(() => {
