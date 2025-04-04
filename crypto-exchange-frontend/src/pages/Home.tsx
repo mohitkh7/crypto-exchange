@@ -1,7 +1,5 @@
 import React from 'react';
 import {
-  AppBar,
-  Toolbar,
   Typography,
   Button,
   Container,
@@ -10,7 +8,6 @@ import {
   Card,
   CardContent,
   useTheme,
-  IconButton,
 } from '@mui/material';
 import {
   CurrencyBitcoin,
@@ -18,13 +15,12 @@ import {
   Speed,
   Support,
   ArrowForward,
-  Facebook,
-  Twitter,
-  LinkedIn,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 
 const Home: React.FC = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const features = [
     {
@@ -51,25 +47,6 @@ const Home: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <AppBar position="static" elevation={0}>
-        <Container maxWidth="lg">
-          <Toolbar sx={{ justifyContent: 'space-between' }}>
-            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-              CryptoExchange
-            </Typography>
-            <Box>
-              <Button color="inherit" sx={{ mr: 2 }}>
-                Login
-              </Button>
-              <Button variant="contained" color="secondary">
-                Sign Up
-              </Button>
-            </Box>
-          </Toolbar>
-        </Container>
-      </AppBar>
-
       {/* Hero Section */}
       <Box
         sx={{
@@ -108,6 +85,7 @@ const Home: React.FC = () => {
                 color="secondary"
                 size="large"
                 endIcon={<ArrowForward />}
+                onClick={() => navigate('/signup')}
               >
                 Start Trading Now
               </Button>
@@ -169,68 +147,6 @@ const Home: React.FC = () => {
           ))}
         </Grid>
       </Container>
-
-      {/* Footer */}
-      <Box
-        component="footer"
-        sx={{
-          py: 3,
-          px: 2,
-          mt: 'auto',
-          backgroundColor: theme.palette.background.paper,
-        }}
-      >
-        <Container maxWidth="lg">
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
-              <Typography variant="h6" gutterBottom>
-                CryptoExchange
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                The most secure and advanced cryptocurrency trading platform
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="h6" gutterBottom>
-                Quick Links
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                About Us
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Terms of Service
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Privacy Policy
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Typography variant="h6" gutterBottom>
-                Connect With Us
-              </Typography>
-              <Box>
-                <IconButton color="inherit">
-                  <Facebook />
-                </IconButton>
-                <IconButton color="inherit">
-                  <Twitter />
-                </IconButton>
-                <IconButton color="inherit">
-                  <LinkedIn />
-                </IconButton>
-              </Box>
-            </Grid>
-          </Grid>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            align="center"
-            sx={{ mt: 4 }}
-          >
-            © 2024 CryptoExchange. All rights reserved.
-          </Typography>
-        </Container>
-      </Box>
     </Box>
   );
 };
