@@ -8,6 +8,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const cryptoRoutes = require('./routes/crypto.routes');
+const healthRoutes = require('./routes/health.routes');
 const { errorHandler } = require('./middleware/error.middleware');
 const { initializeDatabase } = require('./config/database');
 
@@ -28,7 +29,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/crypto', cryptoRoutes);
-
+app.use('/api/health', healthRoutes);
 // Error handling
 app.use(errorHandler);
 
