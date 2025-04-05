@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const cryptoRoutes = require('./routes/crypto.routes');
 const healthRoutes = require('./routes/health.routes');
+const adminRoutes = require('./routes/admin.routes');
 const { errorHandler } = require('./middleware/error.middleware');
 const connectDB = require('./config/database');
 
@@ -30,6 +31,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/crypto', cryptoRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/admin', adminRoutes);
 // Error handling
 app.use(errorHandler);
 

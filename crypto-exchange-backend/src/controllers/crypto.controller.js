@@ -190,8 +190,21 @@ const getDepositAddress = async (req, res, next) => {
     const { cryptoType } = req.params;
     const userId = req.user.userId;
 
-    // TODO: Implement BitGo SDK deposit address generation
-    const depositAddress = `placeholder-${cryptoType}-address-${userId}`;
+    // Check if a deposit address already exists for the user and asset
+    const balance = await Balance.findOne({ user: userId, asset: cryptoType });
+    
+    if (balance && balance.depositAddress) {
+      // If deposit address exists, return it
+      return res.json({
+        success: true,
+        data: {
+          depositAddress: balance.depositAddress
+        }
+      });
+    }
+
+    // Generate a new deposit address (placeholder logic)
+    const depositAddress = `12-placeholder-${cryptoType}-address-${userId}`;
 
     // Store or update deposit address
     await Balance.findOneAndUpdate(

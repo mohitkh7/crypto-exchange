@@ -78,6 +78,38 @@ components:
           type: string
           format: date-time
 
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+        asset:
+          type: string
+        walletId:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+          enum: [hot, cold]
+        multisigType:
+          type: string
+          enum: [tss]
+        multisigTypeVersion:
+          type: string
+          enum: [MPCv2]
+        receiveAddress:
+          type: string
+        balance:
+          type: number
+          format: float
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
 paths:
   /auth/register:
     post:
@@ -443,22 +475,61 @@ paths:
                       address:
                         type: string
 
-  /crypto/price/{coin}:
+  /admin/wallet:
+    post:
+      summary: Create a new wallet
+      tags: [Admin]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - asset
+                - label
+                - walletId
+              properties:
+                asset:
+                  type: string
+                  enum: [eth, btc, usd]
+                label:
+                  type: string
+                walletId:
+                  type: string
+      responses:
+        '201':
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      wallet:
+                        $ref: '#/components/schemas/Wallet'
+
+  /admin/wallet/{asset}:
     get:
-      summary: Get the current price of a cryptocurrency in USD
-      tags: [Crypto]
+      summary: Get wallet details for a specific asset
+      tags: [Admin]
       security:
         - BearerAuth: []
       parameters:
         - in: path
-          name: coin
+          name: asset
           required: true
           schema:
             type: string
-          description: The cryptocurrency symbol (e.g., 'eth', 'btc')
       responses:
         '200':
-          description: Successfully retrieved the cryptocurrency price
+          description: Wallet details retrieved successfully
           content:
             application/json:
               schema:
@@ -466,45 +537,21 @@ paths:
                 properties:
                   success:
                     type: boolean
-                    example: true
                   data:
                     type: object
                     properties:
-                      coin:
-                        type: string
-                        example: eth
-                      price:
-                        type: number
-                        example: 1814.46
-                      currency:
-                        type: string
-                        example: USD
-                      timestamp:
-                        type: string
-                        format: date-time
-                        example: 2025-04-04T21:51:36.418Z
-        '400':
-          description: Invalid request or unsupported cryptocurrency
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error' 
+                      wallet:
+                        $ref: '#/components/schemas/Wallet'
 
-  /crypto/supported-coins:
+  /admin/wallets:
     get:
-      summary: Get the list of supported cryptocurrencies
-      tags: [Crypto]
+      summary: Get all wallets
+      tags: [Admin]
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Successfully retrieved the list of supported cryptocurrencies
+          description: All wallets retrieved successfully
           content:
             application/json:
               schema:
@@ -512,18 +559,10 @@ paths:
                 properties:
                   success:
                     type: boolean
-                    example: true
                   data:
                     type: object
                     properties:
-                      supportedCoins:
+                      wallets:
                         type: array
                         items:
-                          type: string
-                        example: ["eth", "btc"]
-        '500':
-          description: Server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                          $ref: '#/components/schemas/Wallet'

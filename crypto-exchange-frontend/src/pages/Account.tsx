@@ -104,6 +104,10 @@ const Account: React.FC = () => {
       navigate('/sell');
       return;
     }
+    if (type === 'deposit') {
+      navigate('/deposit');
+      return;
+    }
     setDialogType(type);
     setOpenDialog(true);
   };
