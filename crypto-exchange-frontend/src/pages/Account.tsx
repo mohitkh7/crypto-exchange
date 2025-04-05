@@ -16,6 +16,13 @@ import {
   Card,
   CardContent,
   Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
@@ -28,6 +35,10 @@ import {
   CurrencyBitcoin as BitcoinIcon,
   CurrencyExchange as EthereumIcon,
   AttachMoney as UsdIcon,
+  ArrowUpward as BuyTransactionIcon,
+  ArrowDownward as SellTransactionIcon,
+  AddCircle as DepositTransactionIcon,
+  RemoveCircle as WithdrawTransactionIcon,
 } from '@mui/icons-material';
 import { API_URLS } from '../config';
 
@@ -42,11 +53,22 @@ interface Asset {
   amount: number;
 }
 
+interface Transaction {
+  id: string;
+  type: 'buy' | 'sell' | 'deposit' | 'withdraw';
+  asset: string;
+  amount: number;
+  price?: number;
+  status: string;
+  createdAt: string;
+}
+
 const Account: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -66,6 +88,7 @@ const Account: React.FC = () => {
 
     setUser(JSON.parse(storedUser));
     fetchAccountData(token);
+    fetchTransactions(token);
   }, [navigate]);
 
   const fetchAccountData = async (token: string) => {
@@ -86,6 +109,25 @@ const Account: React.FC = () => {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTransactions = async (token: string) => {
+    try {
+      const response = await fetch(API_URLS.crypto.transactions, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
+
+      const data = await response.json();
+      setTransactions(data.data.transactions || []);
+    } catch (err) {
+      console.error('Error fetching transactions:', err);
     }
   };
 
@@ -176,6 +218,25 @@ const Account: React.FC = () => {
     return `${amount.toFixed(8)} ${asset.toUpperCase()}`;
   };
 
+  const getTransactionIcon = (type: string) => {
+    switch (type) {
+      case 'buy':
+        return <BuyTransactionIcon sx={{ color: theme.palette.success.main }} />;
+      case 'sell':
+        return <SellTransactionIcon sx={{ color: theme.palette.error.main }} />;
+      case 'deposit':
+        return <DepositTransactionIcon sx={{ color: theme.palette.info.main }} />;
+      case 'withdraw':
+        return <WithdrawTransactionIcon sx={{ color: theme.palette.warning.main }} />;
+      default:
+        return <AccountBalanceIcon />;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString();
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -245,7 +306,7 @@ const Account: React.FC = () => {
             Quick Actions
           </Typography>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} sm={6} md={3}>
               <Button
                 fullWidth
@@ -291,10 +352,65 @@ const Account: React.FC = () => {
               </Button>
             </Grid>
           </Grid>
+
+          <Typography variant="h5" gutterBottom>
+            Recent Transactions
+          </Typography>
+
+          {transactions.length === 0 ? (
+            <Alert severity="info" sx={{ mb: 3 }}>
+              No transactions available
+            </Alert>
+          ) : (
+            <TableContainer component={Paper} sx={{ mb: 4 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Asset</TableCell>
+                    <TableCell>Amount</TableCell>
+                    <TableCell>Price</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Date</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {transactions.map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {getTransactionIcon(transaction.type)}
+                          <Typography sx={{ textTransform: 'capitalize' }}>
+                            {transaction.type}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>{transaction.asset.toUpperCase()}</TableCell>
+                      <TableCell>{formatAssetAmount(transaction.asset, transaction.amount)}</TableCell>
+                      <TableCell>
+                        {transaction.price ? `$${transaction.price.toFixed(2)}` : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={transaction.status}
+                          color={
+                            transaction.status === 'completed' ? 'success' :
+                            transaction.status === 'pending' ? 'warning' :
+                            'error'
+                          }
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>{formatDate(transaction.createdAt)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Paper>
       </Box>
 
-      {/* Action Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>
           {dialogType === 'sell' && 'Sell Cryptocurrency'}
