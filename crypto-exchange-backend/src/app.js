@@ -10,7 +10,7 @@ const userRoutes = require('./routes/user.routes');
 const cryptoRoutes = require('./routes/crypto.routes');
 const healthRoutes = require('./routes/health.routes');
 const { errorHandler } = require('./middleware/error.middleware');
-const { initializeDatabase } = require('./config/database');
+const connectDB = require('./config/database');
 
 const app = express();
 
@@ -33,21 +33,21 @@ app.use('/api/health', healthRoutes);
 // Error handling
 app.use(errorHandler);
 
-// Initialize database and start server
+// Connect to MongoDB and start server
 const PORT = process.env.PORT || 4000;
 
-initializeDatabase()
+// Connect to MongoDB
+connectDB()
   .then(() => {
     console.log(`Server is about to start on port ${PORT}`);
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+      console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
+    });
   })
   .catch((error) => {
-    console.error('Failed to initialize database:', error);
+    console.error('Failed to connect to MongoDB:', error);
     process.exit(1);
   });
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
-});
 
 module.exports = app; 

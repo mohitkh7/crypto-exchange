@@ -1,6 +1,8 @@
 const axios = require('axios');
-const { db } = require('../config/database');
 const { AppError } = require('../middleware/error.middleware');
+const User = require('../models/User');
+const Balance = require('../models/Balance');
+const Transaction = require('../models/Transaction');
 
 const NodeCache = require('node-cache');
 
@@ -37,22 +39,14 @@ const getBalance = async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
-    db.all(
-      `SELECT crypto_type, amount FROM crypto_assets WHERE user_id = ?`,
-      [userId],
-      (err, assets) => {
-        if (err) {
-          return next(new AppError('Database error', 500));
-        }
+    const assets = await Balance.find({ user: userId });
 
-        res.json({
-          success: true,
-          data: {
-            assets: assets || []
-          }
-        });
+    res.json({
+      success: true,
+      data: {
+        assets: assets || []
       }
-    );
+    });
   } catch (error) {
     next(error);
   }
@@ -62,22 +56,16 @@ const getTransactionHistory = async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
-    db.all(
-      `SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`,
-      [userId],
-      (err, transactions) => {
-        if (err) {
-          return next(new AppError('Database error', 500));
-        }
+    const transactions = await Transaction.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .limit(50);
 
-        res.json({
-          success: true,
-          data: {
-            transactions: transactions || []
-          }
-        });
+    res.json({
+      success: true,
+      data: {
+        transactions: transactions || []
       }
-    );
+    });
   } catch (error) {
     next(error);
   }
@@ -93,60 +81,47 @@ const buyCrypto = async (req, res, next) => {
     const totalCost = price * amount;
 
     // Check user's fiat balance
-    db.get(
-      'SELECT fiat_balance FROM users WHERE id = ?',
-      [userId],
-      async (err, user) => {
-        if (err) {
-          return next(new AppError('Database error', 500));
+    const balance = await Balance.findOne({ user: userId, asset: 'usd' });
+    if (!balance || balance.amount < totalCost) {
+      return next(new AppError('Insufficient funds', 400));
+    }
+
+    try {
+      // Update user's fiat balance
+      balance.amount -= totalCost;
+      await balance.save();
+
+      // Update or insert crypto asset
+      await Balance.findOneAndUpdate(
+        { user: userId, asset: cryptoType },
+        { $inc: { amount: amount } },
+        { upsert: true }
+      );
+
+      // Record transaction
+      await Transaction.create([{
+        user: userId,
+        type: 'buy',
+        asset: cryptoType,
+        amount,
+        price,
+        status: 'completed'
+      }]);
+
+
+      res.json({
+        success: true,
+        data: {
+          message: 'Purchase successful',
+          amount,
+          price,
+          totalCost
         }
-        if (!user || user.fiat_balance < totalCost) {
-          return next(new AppError('Insufficient funds', 400));
-        }
-
-        // Start transaction
-        db.run('BEGIN TRANSACTION');
-
-        try {
-          // Update user's fiat balance
-          db.run(
-            'UPDATE users SET fiat_balance = fiat_balance - ? WHERE id = ?',
-            [totalCost, userId]
-          );
-
-          // Update or insert crypto asset
-          db.run(
-            `INSERT INTO crypto_assets (user_id, crypto_type, amount)
-             VALUES (?, ?, ?)
-             ON CONFLICT(user_id, crypto_type) DO UPDATE SET
-             amount = amount + ?`,
-            [userId, cryptoType, amount, amount]
-          );
-
-          // Record transaction
-          db.run(
-            `INSERT INTO transactions (user_id, type, crypto_type, amount, price, status)
-             VALUES (?, 'buy', ?, ?, ?, 'completed')`,
-            [userId, cryptoType, amount, price]
-          );
-
-          db.run('COMMIT');
-
-          res.json({
-            success: true,
-            data: {
-              message: 'Purchase successful',
-              amount,
-              price,
-              totalCost
-            }
-          });
-        } catch (error) {
-          db.run('ROLLBACK');
-          next(new AppError('Transaction failed', 500));
-        }
-      }
-    );
+      });
+    } catch (error) {
+      console.log(error);
+      next(new AppError('Transaction failed', 500));
+    }
   } catch (error) {
     next(error);
   }
@@ -162,57 +137,49 @@ const sellCrypto = async (req, res, next) => {
     const totalValue = price * amount;
 
     // Check user's crypto balance
-    db.get(
-      'SELECT amount FROM crypto_assets WHERE user_id = ? AND crypto_type = ?',
-      [userId, cryptoType],
-      async (err, asset) => {
-        if (err) {
-          return next(new AppError('Database error', 500));
-        }
-        if (!asset || asset.amount < amount) {
-          return next(new AppError('Insufficient crypto balance', 400));
-        }
+    const asset = await Balance.findOne({ user: userId, asset: cryptoType });
+    if (!asset || asset.amount < amount) {
+      return next(new AppError('Insufficient crypto balance', 400));
+    }
 
-        // Start transaction
-        db.run('BEGIN TRANSACTION');
+    try {
+      // Update user's crypto balance
+      await Balance.findOneAndUpdate(
+        { user: userId, asset: cryptoType },
+        { $inc: { amount: -amount } },
+      );
 
-        try {
-          // Update user's crypto balance
-          db.run(
-            'UPDATE crypto_assets SET amount = amount - ? WHERE user_id = ? AND crypto_type = ?',
-            [amount, userId, cryptoType]
-          );
-
-          // Update user's fiat balance
-          db.run(
-            'UPDATE users SET fiat_balance = fiat_balance + ? WHERE id = ?',
-            [totalValue, userId]
-          );
-
-          // Record transaction
-          db.run(
-            `INSERT INTO transactions (user_id, type, crypto_type, amount, price, status)
-             VALUES (?, 'sell', ?, ?, ?, 'completed')`,
-            [userId, cryptoType, amount, price]
-          );
-
-          db.run('COMMIT');
-
-          res.json({
-            success: true,
-            data: {
-              message: 'Sale successful',
-              amount,
-              price,
-              totalValue
-            }
-          });
-        } catch (error) {
-          db.run('ROLLBACK');
-          next(new AppError('Transaction failed', 500));
-        }
+      // Update user's fiat balance
+      const balance = await Balance.findOne({ user: userId, asset: 'usd' });
+      if (!balance) {
+        return next(new AppError('USD balance not found', 404));
       }
-    );
+      balance.amount += totalValue;
+      await balance.save();
+
+      // Record transaction
+      await Transaction.create([{
+        user: userId,
+        type: 'sell',
+        asset: cryptoType,
+        amount,
+        price,
+        status: 'completed'
+      }]);
+
+      res.json({
+        success: true,
+        data: {
+          message: 'Sale successful',
+          amount,
+          price,
+          totalValue
+        }
+      });
+    } catch (error) {
+      next(new AppError('Transaction failed', 500));
+    }
+    
   } catch (error) {
     next(error);
   }
@@ -227,23 +194,18 @@ const getDepositAddress = async (req, res, next) => {
     const depositAddress = `placeholder-${cryptoType}-address-${userId}`;
 
     // Store or update deposit address
-    db.run(
-      `INSERT OR REPLACE INTO crypto_assets (user_id, crypto_type, deposit_address)
-       VALUES (?, ?, ?)`,
-      [userId, cryptoType, depositAddress],
-      (err) => {
-        if (err) {
-          return next(new AppError('Database error', 500));
-        }
-
-        res.json({
-          success: true,
-          data: {
-            depositAddress
-          }
-        });
-      }
+    await Balance.findOneAndUpdate(
+      { user: userId, asset: cryptoType },
+      { depositAddress },
+      { upsert: true }
     );
+
+    res.json({
+      success: true,
+      data: {
+        depositAddress
+      }
+    });
   } catch (error) {
     next(error);
   }
@@ -255,58 +217,56 @@ const withdrawCrypto = async (req, res, next) => {
     const userId = req.user.userId;
 
     // Check user's crypto balance
-    db.get(
-      'SELECT amount FROM crypto_assets WHERE user_id = ? AND crypto_type = ?',
-      [userId, cryptoType],
-      async (err, asset) => {
-        if (err) {
-          return next(new AppError('Database error', 500));
+    const asset = await Balance.findOne({ user: userId, asset: cryptoType });
+    if (!asset || asset.amount < amount) {
+      return next(new AppError('Insufficient crypto balance', 400));
+    }
+
+    // TODO: Implement BitGo SDK withdrawal
+    // For now, just update the balance
+    const session = await User.startSession();
+    session.startTransaction();
+
+    try {
+      // Update crypto balance
+      await Balance.findOneAndUpdate(
+        { user: userId, asset: cryptoType },
+        { $inc: { amount: -amount } },
+        { session }
+      );
+
+      // Record transaction
+      await Transaction.create([{
+        user: userId,
+        type: 'withdraw',
+        asset: cryptoType,
+        amount,
+        price: 0,
+        status: 'pending'
+      }], { session });
+
+      await session.commitTransaction();
+
+      res.json({
+        success: true,
+        data: {
+          message: 'Withdrawal initiated',
+          amount,
+          address
         }
-        if (!asset || asset.amount < amount) {
-          return next(new AppError('Insufficient crypto balance', 400));
-        }
-
-        // TODO: Implement BitGo SDK withdrawal
-        // For now, just update the balance
-        db.run('BEGIN TRANSACTION');
-
-        try {
-          // Update crypto balance
-          db.run(
-            'UPDATE crypto_assets SET amount = amount - ? WHERE user_id = ? AND crypto_type = ?',
-            [amount, userId, cryptoType]
-          );
-
-          // Record transaction
-          db.run(
-            `INSERT INTO transactions (user_id, type, crypto_type, amount, price, status)
-             VALUES (?, 'withdraw', ?, ?, 0, 'pending')`,
-            [userId, cryptoType, amount]
-          );
-
-          db.run('COMMIT');
-
-          res.json({
-            success: true,
-            data: {
-              message: 'Withdrawal initiated',
-              amount,
-              address
-            }
-          });
-        } catch (error) {
-          db.run('ROLLBACK');
-          next(new AppError('Transaction failed', 500));
-        }
-      }
-    );
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      next(new AppError('Transaction failed', 500));
+    } finally {
+      session.endSession();
+    }
   } catch (error) {
     next(error);
   }
 };
 
 const getCryptoPrice = async (req, res) => {
-  
   try {
     const { coin } = req.params;    
     // Validate if the requested coin is supported
@@ -337,7 +297,6 @@ const getCryptoPrice = async (req, res) => {
     });
   }
 };
-
 
 const getSupportedCoins = (req, res) => {
   return res.status(200).json({

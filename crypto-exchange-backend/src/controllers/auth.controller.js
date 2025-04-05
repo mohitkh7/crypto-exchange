@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { db } = require('../config/database');
+const User = require('../models/User');
+const Balance = require('../models/Balance');
 const { AppError } = require('../middleware/error.middleware');
 
 const register = async (req, res, next) => {
@@ -8,45 +9,44 @@ const register = async (req, res, next) => {
     const { email, password } = req.body;
 
     // Check if user already exists
-    db.get('SELECT id FROM users WHERE email = ?', [email], async (err, user) => {
-      if (err) {
-        return next(new AppError('Database error', 500));
-      }
-      if (user) {
-        return next(new AppError('Email already registered', 400));
-      }
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return next(new AppError('Email already registered', 400));
+    }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+    // Create new user
+    const user = new User({
+      email,
+      password
+    });
 
-      // Create new user
-      db.run(
-        'INSERT INTO users (email, password) VALUES (?, ?)',
-        [email, hashedPassword],
-        function(err) {
-          if (err) {
-            return next(new AppError('Error creating user', 500));
-          }
+    // Save user (password will be hashed by the pre-save middleware)
+    await user.save();
 
-          // Generate JWT token
-          const token = jwt.sign(
-            { userId: this.lastID },
-            process.env.JWT_SECRET || 'your-secret-key',
-            { expiresIn: '24h' }
-          );
+    // Create initial balance entry for the user
+    const initialBalance = new Balance({
+      user: user._id,
+      asset: 'usd',
+      amount: 100 // Initial amount of 100 USD
+    });
+    await initialBalance.save();
 
-          res.status(201).json({
-            success: true,
-            data: {
-              token,
-              user: {
-                id: this.lastID,
-                email
-              }
-            }
-          });
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({
+      success: true,
+      data: {
+        token,
+        user: {
+          id: user._id,
+          email: user.email
         }
-      );
+      }
     });
   } catch (error) {
     next(error);
@@ -57,35 +57,33 @@ const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
-      if (err) {
-        return next(new AppError('Database error', 500));
-      }
-      if (!user) {
-        return next(new AppError('Invalid credentials', 401));
-      }
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return next(new AppError('Invalid credentials', 401));
+    }
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
-      if (!isValidPassword) {
-        return next(new AppError('Invalid credentials', 401));
-      }
+    // Compare password using the method defined in the User model
+    const isValidPassword = await user.comparePassword(password);
+    if (!isValidPassword) {
+      return next(new AppError('Invalid credentials', 401));
+    }
 
-      const token = jwt.sign(
-        { userId: user.id },
-        process.env.JWT_SECRET || 'your-secret-key',
-        { expiresIn: '24h' }
-      );
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
 
-      res.json({
-        success: true,
-        data: {
-          token,
-          user: {
-            id: user.id,
-            email: user.email
-          }
+    res.json({
+      success: true,
+      data: {
+        token,
+        user: {
+          id: user._id,
+          email: user.email
         }
-      });
+      }
     });
   } catch (error) {
     next(error);

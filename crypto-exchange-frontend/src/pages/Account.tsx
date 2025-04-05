@@ -13,6 +13,9 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Card,
+  CardContent,
+  Divider,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
@@ -22,6 +25,9 @@ import {
   Sell as SellIcon,
   Add as DepositIcon,
   Remove as WithdrawIcon,
+  CurrencyBitcoin as BitcoinIcon,
+  CurrencyExchange as EthereumIcon,
+  AttachMoney as UsdIcon,
 } from '@mui/icons-material';
 import { API_URLS } from '../config';
 
@@ -31,15 +37,16 @@ interface User {
   email: string;
 }
 
-interface AccountData {
-  balance: number;
+interface Asset {
+  asset: string;
+  amount: number;
 }
 
 const Account: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [accountData, setAccountData] = useState<AccountData | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -63,7 +70,7 @@ const Account: React.FC = () => {
 
   const fetchAccountData = async (token: string) => {
     try {
-      const response = await fetch(API_URLS.account.balance, {
+      const response = await fetch(API_URLS.crypto.balance, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -74,7 +81,7 @@ const Account: React.FC = () => {
       }
 
       const data = await response.json();
-      setAccountData(data.data);
+      setAssets(data.data.assets || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -141,6 +148,26 @@ const Account: React.FC = () => {
     }
   };
 
+  const getAssetIcon = (asset: string) => {
+    switch (asset.toLowerCase()) {
+      case 'btc':
+            return <BitcoinIcon />;
+      case 'eth':
+            return <EthereumIcon />;
+      case 'usd':
+            return <UsdIcon />;
+      default:
+            return <AccountBalanceIcon />;
+    }
+  };
+
+  const formatAssetAmount = (asset: string, amount: number) => {
+    if (asset.toLowerCase() === 'usd') {
+      return `$${amount.toFixed(2)}`;
+    }
+    return `${amount.toFixed(8)} ${asset.toUpperCase()}`;
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -175,26 +202,36 @@ const Account: React.FC = () => {
             </Alert>
           )}
 
-          <Paper
-            elevation={2}
-            sx={{
-              p: 3,
-              mb: 4,
-              borderRadius: 2,
-              background: `linear-gradient(45deg, ${theme.palette.primary.dark} 30%, ${theme.palette.primary.main} 90%)`,
-              color: 'white',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <AccountBalanceIcon sx={{ fontSize: 40, mr: 2 }} />
-              <Box>
-                <Typography variant="h6">Account Balance</Typography>
-                <Typography variant="h3">
-                  ${accountData?.balance.toFixed(2) || '0.00'}
-                </Typography>
-              </Box>
-            </Box>
-          </Paper>
+          <Typography variant="h5" gutterBottom>
+            Asset Balances
+          </Typography>
+
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            {assets.map((asset) => (
+              <Grid item xs={12} sm={6} md={4} key={asset.asset}>
+                <Card 
+                  elevation={2}
+                  sx={{
+                    borderRadius: 2,
+                    background: `linear-gradient(45deg, ${theme.palette.primary.dark} 30%, ${theme.palette.primary.main} 90%)`,
+                    color: 'white',
+                  }}
+                >
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      {getAssetIcon(asset.asset)}
+                      <Typography variant="h6" sx={{ ml: 1 }}>
+                        {asset.asset.toUpperCase()}
+                      </Typography>
+                    </Box>
+                    <Typography variant="h4">
+                      {formatAssetAmount(asset.asset, asset.amount)}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
 
           <Typography variant="h5" gutterBottom>
             Quick Actions
