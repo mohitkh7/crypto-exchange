@@ -31,7 +31,7 @@ const WithdrawCrypto: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [supportedAssets, setSupportedAssets] = useState<string[]>(['btc', 'eth']);
+  const [supportedAssets, setSupportedAssets] = useState<string[]>(['tbtc4', 'hteth']);
 
   useEffect(() => {
     // Check if user is logged in

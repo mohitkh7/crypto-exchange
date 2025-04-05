@@ -16,7 +16,7 @@ import { API_URLS } from '../config';
 
 const SellCrypto: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedCoin, setSelectedCoin] = useState<string>('eth');
+  const [selectedCoin, setSelectedCoin] = useState<string>('hteth');
   const [price, setPrice] = useState<number | null>(null);
   const [amountUSD, setAmountUSD] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -145,8 +145,8 @@ const SellCrypto: React.FC = () => {
                 fullWidth
                 sx={{ mb: 2 }}
               >
-                <MenuItem value="eth">Ethereum (ETH)</MenuItem>
-                <MenuItem value="btc">Bitcoin (BTC)</MenuItem>
+                <MenuItem value="hteth">Testnet Ethereum (HTETH)</MenuItem>
+                <MenuItem value="tbtc4">Testnet Bitcoin (TBTC4)</MenuItem>
               </TextField>
             </Grid>
 

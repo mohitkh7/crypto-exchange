@@ -10,7 +10,7 @@ const NodeCache = require('node-cache');
 const cache = new NodeCache({ stdTTL: process.env.CACHE_TTL_IN_SECONDS });
 
 // List of supported cryptocurrencies
-const supportedCoins = ['eth', 'btc'];
+const supportedCoins = ['hteth', 'tbtc4'];
 
 // Placeholder for BitGo SDK integration
 const getCurrentPrice = async (coin) => {
@@ -22,12 +22,9 @@ const getCurrentPrice = async (coin) => {
     return cachedPrice;
   }
 
+  // Todo: Implement BitGo API Get price
   // Fetch price data from BitGo API
-  const response = await axios.get(`https://app.bitgo.com/api/v2/market/latest?coin=${coin.toLowerCase()}`);
-    
-  // Extract the USD price from the response
-  const marketData = response.data.marketData[0];
-  const usdPrice = marketData.currencies.USD.last;
+  const usdPrice = 1;
 
   // Store in cache
   cache.set(key, usdPrice);
@@ -204,6 +201,8 @@ const getDepositAddress = async (req, res, next) => {
     }
 
     // Generate a new deposit address (placeholder logic)
+    // TODO: Implement BitGo SDK Get receive address
+    // For now, just return static address
     const depositAddress = `placeholder-${cryptoType}-address-${userId}`;
 
     // Store or update deposit address

@@ -26,7 +26,7 @@ const Home: React.FC = () => {
     {
       icon: <CurrencyBitcoin sx={{ fontSize: 40 }} />,
       title: 'Multiple Cryptocurrencies',
-      description: 'Trade Bitcoin, Ethereum, and many other cryptocurrencies',
+      description: 'Exchange Bitcoin, Ethereum, and many other cryptocurrencies',
     },
     {
       icon: <Security sx={{ fontSize: 40 }} />,
@@ -60,10 +60,10 @@ const Home: React.FC = () => {
           <Grid container spacing={4} alignItems="center">
             <Grid item xs={12} md={6}>
               <Typography variant="h1" gutterBottom>
-                Trade Crypto with Confidence
+                Exchange Crypto with Confidence
               </Typography>
               <Typography variant="h5" sx={{ mb: 4, color: 'text.secondary' }}>
-                Join the future of digital currency trading
+                Join the future of digital currency exchange
               </Typography>
               <Box
                 sx={{
@@ -77,7 +77,7 @@ const Home: React.FC = () => {
                   Get $100 Free Bonus!
                 </Typography>
                 <Typography variant="body1">
-                  Sign up now and receive $100 in trading credits
+                  Sign up now and receive $100 in credits
                 </Typography>
               </Box>
               <Button
@@ -85,9 +85,9 @@ const Home: React.FC = () => {
                 color="secondary"
                 size="large"
                 endIcon={<ArrowForward />}
-                onClick={() => navigate('/signup')}
+                onClick={() => navigate('/account')}
               >
-                Start Trading Now
+                Start Now
               </Button>
             </Grid>
             <Grid item xs={12} md={6}>

@@ -23,7 +23,7 @@ const Footer: React.FC = () => {
               CryptoExchange
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              The most secure and advanced cryptocurrency trading platform
+              The most secure and advanced cryptocurrency exchange platform
             </Typography>
           </Grid>
           <Grid item xs={12} md={4}>
@@ -69,10 +69,10 @@ const Footer: React.FC = () => {
               <IconButton color="inherit" href="https://facebook.com" target="_blank" rel="noopener">
                 <Facebook />
               </IconButton>
-              <IconButton color="inherit" href="https://twitter.com" target="_blank" rel="noopener">
+              <IconButton color="inherit" href="https://x.com/BitGo" target="_blank" rel="noopener">
                 <Twitter />
               </IconButton>
-              <IconButton color="inherit" href="https://linkedin.com" target="_blank" rel="noopener">
+              <IconButton color="inherit" href="https://www.linkedin.com/company/bitgo/posts/" target="_blank" rel="noopener">
                 <LinkedIn />
               </IconButton>
             </Box>
