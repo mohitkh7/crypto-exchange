@@ -2,7 +2,47 @@ openapi: 3.0.0
 info:
   title: Crypto Exchange API
   version: 1.0.0
-  description: API documentation for the cryptocurrency exchange platform
+  description: |
+    API documentation for the cryptocurrency exchange platform
+    
+    ## WebSocket Endpoint
+    
+    The platform also provides a WebSocket endpoint for real-time notifications:
+    
+    ```
+    ws://localhost:4000
+    ```
+    
+    ### WebSocket Message Format
+    
+    The WebSocket server accepts messages in the following format:
+    
+    ```json
+    {
+      "hash": "0x8f11dabb53f45a3f894d7b534d204c1e1b2188355492cf49dcf757d998d5e287",
+      "transfer": "67f0d8f2215ab1fe84f22ce71bec2419",
+      "coin": "hteth",
+      "type": "transfer",
+      "state": "confirmed",
+      "wallet": "67adc2acebc3a6f92625ca6e8035beee",
+      "walletType": "hot",
+      "transferType": "receive",
+      "baseValue": 1000000000000000000,
+      "baseValueString": "1000000000000000000",
+      "value": 1000000000000000000,
+      "valueString": "1000000000000000000",
+      "feeString": "21457842000",
+      "initiator": ["external"],
+      "receiver": "0xb868113b246c65514ee5010b323e47970d6dcb27"
+    }
+    ```
+    
+    When a deposit is received, the system will:
+    1. Check if the message is a transfer and is confirmed
+    2. If transferType is "receive", look for the receiver address
+    3. Find the user with the matching deposit address
+    4. Update the user's balance for the corresponding asset
+    5. Create a new transaction record of type "deposit"
 
 servers:
   - url: http://localhost:4000/api

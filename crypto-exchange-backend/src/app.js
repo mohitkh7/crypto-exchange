@@ -3,6 +3,7 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const path = require('path');
+const http = require('http');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth.routes');
@@ -12,8 +13,10 @@ const healthRoutes = require('./routes/health.routes');
 const adminRoutes = require('./routes/admin.routes');
 const { errorHandler } = require('./middleware/error.middleware');
 const connectDB = require('./config/database');
+const { initializeWebSocketServer } = require('./websocket/server');
 
 const app = express();
+const server = http.createServer(app);
 
 // Load Swagger documentation
 const swaggerDocument = YAML.load(path.join(__dirname, '../docs/swagger.yaml'));
@@ -42,9 +45,16 @@ const PORT = process.env.PORT || 4000;
 connectDB()
   .then(() => {
     console.log(`Server is about to start on port ${PORT}`);
-    app.listen(PORT, () => {
+    
+    // Initialize WebSocket server
+    const wss = initializeWebSocketServer(server);
+    console.log('WebSocket server initialized');
+    
+    // Start the server
+    server.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
+      console.log(`WebSocket server is running on ws://localhost:${PORT}`);
     });
   })
   .catch((error) => {
