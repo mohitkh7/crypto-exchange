@@ -8,6 +8,7 @@ import Account from './pages/Account';
 import BuyCrypto from './pages/BuyCrypto';
 import SellCrypto from './pages/SellCrypto';
 import DepositCrypto from './pages/DepositCrypto';
+import WithdrawCrypto from './pages/WithdrawCrypto';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import { UserProvider } from './UserContext';
@@ -41,6 +42,7 @@ const App: React.FC = () => {
                 <Route path="/buy" element={<BuyCrypto />} />
                 <Route path="/sell" element={<SellCrypto />} />
                 <Route path="/deposit" element={<DepositCrypto />} />
+                <Route path="/withdraw" element={<WithdrawCrypto />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>

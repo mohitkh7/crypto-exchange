@@ -108,6 +108,10 @@ const Account: React.FC = () => {
       navigate('/deposit');
       return;
     }
+    if (type === 'withdraw') {
+      navigate('/withdraw');
+      return;
+    }
     setDialogType(type);
     setOpenDialog(true);
   };

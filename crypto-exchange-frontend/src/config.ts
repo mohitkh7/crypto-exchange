@@ -15,5 +15,6 @@ export const API_URLS = {
     sell: `${API_HOST}/api/crypto/sell`,
     price: `${API_HOST}/api/crypto/price`,
     depositAddress: (cryptoType: string) => `${API_HOST}/api/crypto/deposit-address/${cryptoType}`,
+    withdraw: `${API_HOST}/api/crypto/withdraw`,
   },
 };

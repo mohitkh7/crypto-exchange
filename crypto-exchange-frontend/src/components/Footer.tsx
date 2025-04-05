@@ -41,6 +41,21 @@ const Footer: React.FC = () => {
               </Link>
             </Typography>
             <Typography variant="body2" color="text.secondary">
+              <Link href="/deposit" color="inherit" underline="hover">
+                Deposit Crypto
+              </Link>
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              <Link href="/withdraw" color="inherit" underline="hover">
+                Withdraw Crypto
+              </Link>
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              <Link href="http://localhost:4000/api-docs" color="inherit" underline="hover" target="_blank" rel="noopener">
+                API Documentation
+              </Link>
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
               <Link href="https://developers.bitgo.com/" color="inherit" underline="hover" target="_blank" rel="noopener">
                 BitGo Developer Portal
               </Link>

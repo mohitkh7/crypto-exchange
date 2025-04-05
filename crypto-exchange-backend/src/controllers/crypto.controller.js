@@ -204,7 +204,7 @@ const getDepositAddress = async (req, res, next) => {
     }
 
     // Generate a new deposit address (placeholder logic)
-    const depositAddress = `12-placeholder-${cryptoType}-address-${userId}`;
+    const depositAddress = `placeholder-${cryptoType}-address-${userId}`;
 
     // Store or update deposit address
     await Balance.findOneAndUpdate(
@@ -237,15 +237,12 @@ const withdrawCrypto = async (req, res, next) => {
 
     // TODO: Implement BitGo SDK withdrawal
     // For now, just update the balance
-    const session = await User.startSession();
-    session.startTransaction();
 
     try {
       // Update crypto balance
       await Balance.findOneAndUpdate(
         { user: userId, asset: cryptoType },
         { $inc: { amount: -amount } },
-        { session }
       );
 
       // Record transaction
@@ -256,9 +253,8 @@ const withdrawCrypto = async (req, res, next) => {
         amount,
         price: 0,
         status: 'pending'
-      }], { session });
+      }]);
 
-      await session.commitTransaction();
 
       res.json({
         success: true,
@@ -269,10 +265,7 @@ const withdrawCrypto = async (req, res, next) => {
         }
       });
     } catch (error) {
-      await session.abortTransaction();
       next(new AppError('Transaction failed', 500));
-    } finally {
-      session.endSession();
     }
   } catch (error) {
     next(error);
